@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Touchpad Controller</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #0a0a0f;
+    touch-action: none;
+    font-family: "Segoe UI", sans-serif;
+    user-select: none;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+
+    /* Neon glow background */
+    background: radial-gradient(circle at center, #191932 0%, #000010 100%);
+}
+
+#pad {
+    flex: 1;
+    width: calc(100% - 20px);
+    background: #131325;
+    border: 2px solid #2a2aff;
+    box-shadow: 0px 0px 20px #4b4bff33 inset;
+    border-radius: 15px;
+    margin: 10px 10px 5px 10px;
+    min-height: 0;
+}
+
+#buttons {
+    height: 90px;
+    display: flex;
+    background: transparent;
+    margin: 5px 10px 10px 10px;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+button {
+    flex: 1;
+    background: #1b1b3a;
+    border: 2px solid #3d3dff;
+    font-size: 22px;
+    padding: 12px;
+    color: #e0e0ff;
+    border-radius: 12px;
+    cursor: pointer;
+
+    /* Neon glow effect */
+    box-shadow: 0 0 12px #2a2aff, 0 0 25px #1b1bff44;
+    transition: 0.15s ease-in-out;
+}
+
+button:hover {
+    box-shadow: 0 0 20px #6a6aff, 0 0 35px #4444ff88;
+    transform: scale(1.05);
+}
+
+button:active {
+    background: #4646ff;
+    box-shadow: 0 0 10px #8a8aff, 0 0 25px #5454ffbb;
+    transform: scale(0.97);
+}
+</style>
+</head>
+<body>
+
+<div id="pad"></div>
+
+<div id="buttons">
+    <button id="leftBtn">Left Click</button>
+    <button id="rightBtn">Right Click</button>
+</div>
+
+<script>
+const ws = new WebSocket("ws://192.168.8.109:9000");
+
+ws.onopen = () => console.log("Connected ✔️");
+ws.onerror = () => alert("WebSocket error 😭");
+ws.onclose = () => alert("Lost connection 😢");
+
+const pad = document.getElementById("pad");
+let lastX = null, lastY = null;
+let isScrolling = false;
+let hasMoved = false;
+
+function send(obj) {
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(obj));
+    }
+}
+
+// handle touch start
+pad.addEventListener("touchstart", e => {
+    if (e.touches.length === 1) {
+        const t = e.touches[0];
+        lastX = t.clientX;
+        lastY = t.clientY;
+        hasMoved = false;
+    }
+    isScrolling = (e.touches.length === 2);
+});
+
+// handle movement
+pad.addEventListener("touchmove", e => {
+    e.preventDefault();
+    hasMoved = true;
+
+    if (e.touches.length === 1 && !isScrolling) {
+        const t = e.touches[0];
+        send({
+            type: "move",
+            dx: t.clientX - lastX,
+            dy: t.clientY - lastY
+        });
+        lastX = t.clientX;
+        lastY = t.clientY;
+    }
+    else if (e.touches.length === 2) {
+        const t = e.touches[0];
+        const dy = t.clientY - lastY;
+        send({ type: "scroll", dy: -dy }); // natural scroll
+        lastX = t.clientX;
+        lastY = t.clientY;
+    }
+});
+
+// single tap (no movement) = click
+pad.addEventListener("touchend", e => {
+    if (e.touches.length === 0 && !isScrolling && !hasMoved) {
+        send({ type: "click", btn: "left" });
+    }
+    isScrolling = false;
+    hasMoved = false;
+});
+
+// Buttons:
+document.getElementById("leftBtn").onclick = () =>
+    send({ type: "click", btn: "left" });
+
+document.getElementById("rightBtn").onclick = () =>
+    send({ type: "click", btn: "right" });
+</script>
+
+</body>
+</html>
