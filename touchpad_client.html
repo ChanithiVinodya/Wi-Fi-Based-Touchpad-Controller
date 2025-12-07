@@ -82,7 +82,7 @@ button:active {
 </div>
 
 <script>
-const ws = new WebSocket("ws://192.168.8.109:9000");
+const ws = new WebSocket("ws://<ip address>:9000");
 
 ws.onopen = () => console.log("Connected ✔️");
 ws.onerror = () => alert("WebSocket error 😭");
@@ -152,4 +152,5 @@ document.getElementById("rightBtn").onclick = () =>
 </script>
 
 </body>
+
 </html>
