@@ -121,3 +121,6 @@ This project was built to explore:
 * Practical applications of WebSockets and automation tools
 
 It also demonstrates full-stack thinking: **UI → Network → Backend → OS interaction**.
+
+## Video
+https://github.com/user-attachments/assets/b2931826-c5c8-4015-bda6-c8fb8c8711cd
